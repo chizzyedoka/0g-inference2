@@ -1,0 +1,37 @@
+{
+  "name": "oglab",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "npx http-server . -p 3000 -o",
+    "proxy": "node proxy-server.js",
+    "dev-browser": "npm run proxy & npm run serve",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@0glabs/0g-serving-broker": "^0.3.1",
+    "@0glabs/0g-ts-sdk": "^0.3.0",
+    "@types/crypto-js": "^4.2.2",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.1",
+    "openai": "^5.12.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.12",
+    "@types/node": "^22.10.5",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.12",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
