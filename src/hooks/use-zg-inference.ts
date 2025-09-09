@@ -130,7 +130,7 @@ export function useZGInference() {
       defaultHeaders: { ...headers } as Record<string, string>,
       dangerouslyAllowBrowser: true
     })
-    
+
     const requestParams: any = {
       messages,
       model: currentService.model || 'gpt-3.5-turbo',

@@ -255,21 +255,21 @@ const runInference = async () => {
 
   setIsLoading(true)
   setResponse('')
-  
+
   try {
     const question = userMessage.trim()
-    
+
     addLog('Preparing inference request...', 'info')
     addLog(`User message: ${question}`, 'info')
-    
+
     // Build the conversation messages
     const messages: any[] = []
-    
+
     // Add system instructions
     if (systemPrompt.trim()) {
       messages.push({ role: "system", content: systemPrompt.trim() })
     }
-    
+
     // Add the user's message
     messages.push({ role: "user", content: question })
 
@@ -280,77 +280,78 @@ const runInference = async () => {
 
     addLog(`Using endpoint: ${endpoint}`, 'info')
     addLog(`Using model: ${model}`, 'info')
-    
-    // Enhanced debuggingnp,mn
+
+    // Enhanced debugging
     addLog(`Provider type: ${typeof currentService?.provider}`, 'info')
     addLog(`Provider exists: ${!!currentService?.provider}`, 'info')
     addLog(`Provider value: ${currentService?.provider}`, 'info')
     addLog(`Endpoint: ${currentService?.endpoint}`, 'info')
-    
+
     // Add safety check for provider
     if (!currentService.provider) {
       addLog('Error: Service provider is undefined', 'error')
       return
     }
-    
+
     // Generate auth headers 
     const providerAddress = currentService.provider?.toString?.() || currentService.provider
-    
+
     if (!providerAddress) {
       addLog('Error: Could not get provider address', 'error')
       return
     }
-    
+
     addLog(`Using provider address: ${providerAddress}`, 'info')
     const headers = await broker.inference.getRequestHeaders(providerAddress, question)
     addLog('Got authentication headers', 'success')
     addLog(`Raw headers: ${JSON.stringify(headers)}`, 'info')
-    
-    addLog('Making inference request...', 'info')
-    
+
+    addLog('Making inference request via API proxy...', 'info')
+
     // Ensure model is defined
     if (!model) {
       throw new Error('Model is required for inference request')
     }
-    
-    // Use direct fetch to match exactly what Node.js does
+
+    // Prepare request body for proxy
     const requestBody = {
       messages: messages,
       model: model,
     }
-    
+
     addLog(`Request body: ${JSON.stringify(requestBody)}`, 'info')
-    
-    // Make direct fetch request with exact headers
-    const response = await fetch(`${endpoint}/chat/completions`, {
+
+    // Use Next.js API route as proxy to avoid CORS
+    const proxyRes = await fetch('/api/inference', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...headers,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        endpoint: `${endpoint}/chat/completions`,
+        headers,
+        body: requestBody,
+      }),
     })
-    
-    if (!response.ok) {
-      console.log(`Error: ${response.status}`);
-      console.log('Response details:', response);
-      const errorText = await response.text()
-      throw new Error(`${response.status} "${errorText}"`)
+
+    if (!proxyRes.ok) {
+      const errorText = await proxyRes.text()
+      throw new Error(`${proxyRes.status} "${errorText}"`)
     }
-    
-    const completion = await response.json()
+
+    const completion = await proxyRes.json()
     console.log("OpenAI Response:", completion)
 
     // Extract answer
     const aiResponse = completion.choices[0].message.content!;
     setResponse(aiResponse)
     addLog('Inference completed successfully!', 'success')
-    
+
     // Show usage info if available
     if (completion.usage) {
       addLog(`Tokens used: ${completion.usage.total_tokens}`, 'info')
     }
-    
+
     // Show final balances using official API
     try {
       const finalLedger = await broker.ledger.getLedger()
@@ -361,7 +362,7 @@ const runInference = async () => {
     } catch (balanceError) {
       addLog('Could not get updated balance', 'info')
     }
-    
+
   } catch (error) {
     addLog(`Inference failed: ${error}`, 'error')
   } finally {
